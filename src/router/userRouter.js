@@ -60,7 +60,7 @@ router.post('/users/login', (req, res) => {
 
         if(!user) return res.send("User not found") 
 
-        if(!user.verified) return res.send("Please, verify your email") 
+        if(!user.status) return res.send("Please, verify your email") 
 
         const hash = await bcrypt.compare(password, user.password) 
 
@@ -171,7 +171,8 @@ router.get('/users/profile', (req,res) => {
     })
 })
 
-router.patch('/users/:userid', (req, res) => { // UPDATE USER
+// UPDATE USER
+router.patch('/users/:userid', (req, res) => { 
     const sql = `UPDATE users SET ? WHERE id = ?`
     const data = [req.body, req.params.userid]
 
@@ -179,6 +180,152 @@ router.patch('/users/:userid', (req, res) => { // UPDATE USER
         if (err) return res.send(err.mess)
 
         res.send(result)
+    })
+})
+
+//show genre user
+router.get('/users/genre/:userid',(req,res) => {
+    const data = req.params.userid
+    const sql = `SELECT * FROM user WHERE ?`;
+    const sql2 = `SELECT name FROM genre g JOIN user_genre ug ON g.id = ug.genre_id WHERE ug.user_id = ${data}`;
+
+    conn.query(sql,data, (err,result) => {
+        if (err) return res.send(err.mess)
+
+        const user = result[0]
+        conn.query(sql2,data, (err,result) => {
+            res.send({
+                user,
+                result
+            })
+        })
+    })
+})
+
+//add genre user
+router.post('/users/addgenre/:userid', (req,res) => {
+    const data = {}
+    const userid = req.params.userid
+    const genreid = req.body.id
+    const sql = `SELECT id FROM user WHERE id = '${userid}'`;
+    const sql2 = `SELECT id FROM genre WHERE id = '${genreid}'`;
+    const sql3 = `SELECT user_id, genre_id FROM user_genre WHERE user_id = '${userid}' AND genre_id = '${genreid}'`
+    const sql4 = 'INSERT INTO user_genre SET ?';
+    const sql5 = `SELECT * FROM user WHERE id = '${userid}'`;
+    const sql6 = `SELECT name FROM genre g JOIN user_genre ug ON g.id = ug.genre_id WHERE ug.user_id = ${userid}`;
+
+
+    conn.query(sql, (err, result) => {
+        if(err) return res.send(err.sqlMessage)
+        if(result.length === 0) return res.status(400).send("User Not Found")
+        
+        data.user_id = result[0].id
+
+        conn.query(sql2, (err, result2) => {
+            if(err) res.send(err.sqlMessage)
+            if(result2.length === 0) return res.status(400).send("Genre Not Found")
+            
+            data.genre_id = result2[0].id
+
+            conn.query(sql3, (err,result3) => {
+                if(err) return res.send(err.sqlMessage)
+                if(result3.length !== 0) return res.status(400).send("Genre is already choosen")
+                conn.query(sql4, data, (err, result4) => {
+                    if(err) return res.send(err.sqlMessage)
+    
+                    conn.query(sql5, (err, result5) => {
+                        if(err) return res.send(err.sqlMessage)
+    
+                        const user = result5[0]
+                        
+                        conn.query(sql6, (err,result6) => {
+                            if(err) return res.send(err.sqlMessage)
+    
+                            res.send({
+                                user,result6
+                            })
+                        })
+                    })
+                })
+            })
+
+        })
+})
+})
+
+//edit genre user
+router.patch('/users/editgenre/:userid', (req,res) => {
+    const data = {}
+    const userid = req.params.userid
+    const genreid = req.body.id
+    const genreidnew = req.body.idnew
+    const sql = `SELECT id FROM user WHERE id = '${userid}'`;
+    const sql2 = `SELECT id FROM genre WHERE id = '${genreid}'`;
+    const sql3 = `SELECT user_id, genre_id FROM user_genre WHERE user_id = '${userid}' AND genre_id = '${genreid}'`
+    const sql4 = `UPDATE user_genre SET genre_id = '${genreidnew}' WHERE user_id = '${userid}' AND genre_id = '${genreid}'`
+    const sql5 = `SELECT * FROM user WHERE id = '${userid}'`;
+    const sql6 = `SELECT name FROM genre g JOIN user_genre ug ON g.id = ug.genre_id WHERE ug.user_id = ${userid}`;
+
+
+    conn.query(sql, (err, result) => {
+        if(err) return res.send(err.sqlMessage)
+        if(result.length === 0) return res.status(400).send("User Not Found")
+        
+        data.user_id = result[0].id
+
+        conn.query(sql2, (err, result2) => {
+            if(err) res.send(err.sqlMessage)
+            if(result2.length === 0) return res.status(400).send("Genre Not Found")
+            
+            data.genre_id = result2[0].id
+
+            conn.query(sql3, (err,result3) => {
+                if(err) return res.send(err.sqlMessage)
+                if(result3.length === 0) return res.status(400).send("Genre Not Found")
+                conn.query(sql4, data, (err, result4) => {
+                    if(err) return res.send(err.sqlMessage)
+    
+                    conn.query(sql5, (err, result5) => {
+                        if(err) return res.send(err.sqlMessage)
+    
+                        const user = result5[0]
+                        
+                        conn.query(sql6, (err,result6) => {
+                            if(err) return res.send(err.sqlMessage)
+    
+                            res.send({
+                                user,result6
+                            })
+                        })
+                    })
+                })
+            })
+
+        })
+})
+})
+
+//delete genre user
+router.delete('/users/deletegenre/:userid', (req,res) => {
+    const userid = req.params.userid
+    const genreid = req.body.id
+    const sql = `DELETE FROM user_genre WHERE user_id = '${userid}' AND genre_id = '${genreid}'`
+    const sql2 = `SELECT * FROM user WHERE id = ${userid}`;
+    const sql3 = `SELECT name FROM genre g JOIN user_genre ug ON g.id = ug.genre_id WHERE ug.user_id = ${userid}`;
+
+    conn.query(sql, (err,result) => {
+        if(err) return res.send(err.sqlMessage)
+        
+        conn.query(sql2, (err,result2) => {
+            if(err) return res.send(err.sqlMessage)
+            
+            conn.query(sql3, (err,result3) => {
+                if(err) return res.send(err.sqlMessage)
+
+                res.send(result3)
+
+            })
+        })
     })
 })
 
