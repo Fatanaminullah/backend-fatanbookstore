@@ -57,6 +57,7 @@ router.post('/users/login', (req, res) => {
         if(err) return res.send(err.message) 
 
         const user = result[0] 
+        const role = result[0].role
 
         if(!user) return res.send("User not found") 
 
@@ -64,7 +65,34 @@ router.post('/users/login', (req, res) => {
 
         const hash = await bcrypt.compare(password, user.password) 
 
-        if(!hash) return res.send("Wrong password") 
+        if(!hash) return res.send("Wrong password")
+        
+        if(role !== 2) return res.send("User Not Found")
+
+        res.send(user) 
+    })
+})
+//login admin
+router.post('/admin/login', (req, res) => { 
+    const {username, password} = req.body
+
+    const sql = `SELECT * FROM user WHERE username = '${username}'`
+
+    conn.query(sql, async (err, result) => {
+        if(err) return res.send(err.message) 
+
+        const user = result[0] 
+        const role = result[0].role
+
+        if(!user) return res.send("User not found") 
+
+        if(!user.status) return res.send("Please, verify your email") 
+
+        const hash = await bcrypt.compare(password, user.password) 
+
+        if(!hash) return res.send("Wrong password")
+        
+        if(role !== 1) return res.send("Your Account is not registered as an Administrator")
 
         res.send(user) 
     })
