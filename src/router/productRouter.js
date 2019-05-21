@@ -35,12 +35,14 @@ router.get('/products', (req,res) => {
 })
 //edit product
 router.patch('/products/edit/:idproduct', (req,res) => {
-    const sql = `UPDATE products SET ? WHERE id = ?`
-    const sql2 = `SELECT * FROM products`
     const data = [req.body, req.params.idproduct]
+    const sql = `UPDATE products SET ? WHERE id = ?`
+    const sql2 = `SELECT * FROM products WHERE id = ${data[1]}`
 
     conn.query(sql, data, (err, result) => {
         if (err) return res.send(err.mess)
+        console.log(result);
+        
         
         conn.query(sql2, (err,result) => {
             if (err) return res.send(err.mess)

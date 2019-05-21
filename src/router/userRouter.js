@@ -57,17 +57,18 @@ router.post('/users/login', (req, res) => {
         if(err) return res.send(err.message) 
 
         const user = result[0] 
-        const role = result[0].role
+        console.log(result);
+        
+        
+        if(!user) return res.status(400).send("User not found") 
 
-        if(!user) return res.send("User not found") 
-
-        if(!user.status) return res.send("Please, verify your email") 
+        if(!user.status) return res.status(400).send("Please, verify your email") 
 
         const hash = await bcrypt.compare(password, user.password) 
 
-        if(!hash) return res.send("Wrong password")
+        if(!hash) return res.status(400).send("Wrong password")
         
-        if(role !== 2) return res.send("User Not Found")
+        if(user.role !== 2) return res.status(400).send("User Not Found")
 
         res.send(user) 
     })
@@ -82,17 +83,16 @@ router.post('/admin/login', (req, res) => {
         if(err) return res.send(err.message) 
 
         const user = result[0] 
-        const role = result[0].role
 
-        if(!user) return res.send("User not found") 
+        if(!user) return res.status(400).send("User not found") 
 
-        if(!user.status) return res.send("Please, verify your email") 
+        if(!user.status) return res.status(400).send("Please, verify your email") 
 
         const hash = await bcrypt.compare(password, user.password) 
 
-        if(!hash) return res.send("Wrong password")
+        if(!hash) return res.status(400).send("Wrong password")
         
-        if(role !== 1) return res.send("Your Account is not registered as an Administrator")
+        if(user.role !== 1) return res.status(400).send("Your Account is not registered as an Administrator")
 
         res.send(user) 
     })
@@ -219,7 +219,7 @@ router.get('/users/genre/:userid',(req,res) => {
 
     conn.query(sql,data, (err,result) => {
         if (err) return res.send(err.mess)
-
+        
         const user = result[0]
         conn.query(sql2,data, (err,result) => {
             res.send({
@@ -227,6 +227,18 @@ router.get('/users/genre/:userid',(req,res) => {
                 result
             })
         })
+    })
+})
+
+//show user
+router.get('/users',(req,res) => {
+    const sql = `SELECT user.id,firstname,lastname,username,email,status, r.name AS role_name,birthday,address,k.kodepos,avatar FROM user JOIN tbl_kodepos k ON user.kodepos = k.id JOIN role r ON user.role = r.id`;
+    
+    conn.query(sql, (err,result) => {
+        if (err) return res.send(err.mess)
+
+        res.send(result)
+
     })
 })
 
