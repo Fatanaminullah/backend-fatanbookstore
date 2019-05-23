@@ -11,6 +11,22 @@ router.get('/genre',(req,res) => {
         res.send(result)
     })
 })
+//add genre
+router.post('/genre/add', (req,res) => {
+    sql = `INSERT INTO genre SET ?`
+    sql2 =  `SELECT * FROM genre`
+    data = req.body
+
+    conn.query(sql,data, (err,result) => {
+        if(err) return res.send(err.sqlMessage)
+        
+        conn.query(sql2, (err,result) => {
+            if(err) return res.send(err.sqlMessage)
+            
+            res.send(result)
+        })
+    })
+})
 //edit genre
 router.patch('/genre/edit/:genreid',(req,res) => {
     const sql = `UPDATE genre SET ? WHERE id = ?`
@@ -59,7 +75,7 @@ router.get('/genre/products',(req,res) => {
 })
 //genre users
 router.get('/genre/users',(req,res) => {
-    const sql = `SELECT u.id,username,name FROM user_genre ug JOIN user u ON u.id = ug.user_id JOIN genre g ON g.id = ug.genre_id`
+    const sql = `SELECT u.id,username,name FROM user_genre ug JOIN user u ON u.id = ug.user_id JOIN genre g ON g.id = ug.genre_id WHERE u.role = 2`
 
     conn.query(sql,(err,result) => {
         if (err) return res.send(err.sqlMessage);

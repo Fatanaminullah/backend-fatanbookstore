@@ -6,6 +6,9 @@ const conn = require('../connection/connection')
 const multer = require('multer')
 const path = require('path') // Menentukan folder uploads
 const fs = require('fs') // menghapus file gambar
+
+const uploadDir = path.join(__dirname + '/../uploads' )
+
 //create users
 router.post('/user/register', async (req, res) => { // CREATE USER
     var sql = `INSERT INTO user SET ?;` // Tanda tanya akan digantikan oleh variable data
@@ -98,17 +101,20 @@ router.post('/admin/login', (req, res) => {
     })
 })
 
-const uploadDir = path.join(__dirname + '/../uploads' )
 
 
 const storagE = multer.diskStorage({
     
     filename : function(req, file, cb) {
         cb(null, Date.now() + file.fieldname + path.extname(file.originalname))
+    },
+    // Destination
+    destination : function(req, file, cb) {
+        cb(null, uploadDir)
     }
 })
 
-const upstore = multer ({
+const upload = multer ({
     storage: storagE,
     limits: {
         fileSize: 10000000 // Byte
@@ -122,22 +128,34 @@ const upstore = multer ({
 })
 
 //upload avatar
-router.post('/avatar/uploads', upstore.single('avatar'), (req, res) => {
-    const sql = `SELECT * FROM user WHERE username = ?`
-    const sql2 = `UPDATE user SET avatar  = '${req.file.filename}' WHERE username = '${req.body.username}'`
-    const data = req.body.username
+router.post('/avatar/uploads/:userid', upload.single('avatar'), (req, res) => {
+    const sql = `UPDATE user SET avatar  = '${req.file.filename}' WHERE id = '${req.params.userid}'`
     
-    conn.query(sql, data, (err, result) => {
-        if (err) return res.send(err)
+    conn.query(sql, (err, result) => {
+        if (err) return res.send(err.sqlMessage)
         
-        conn.query(sql2, (err , result) => {
-            if (err) return res.send(err)
-            
-            res.send({filename: req.file.filename})
-        })
+        res.send({filename: req.file.filename})
     })
 })
 
+//link avatar
+router.get('/users/avatar/:avatar', (req,res) => {
+    res.sendFile(`${uploadDir}/${req.params.avatar}`)
+})
+
+//get avatar
+router.get('/avatar', (req,res) => {
+    const sql = `SELECT * FROM user WHERE username = ?`
+    var data = req.body.username
+    
+    conn.query(sql,data, (err,result) => {
+        if(err) return res.send(err)
+        res.send({
+            users:result[0],
+            photo: `http://localhost:2000/avatar/${result[0].avatar}`
+        })
+    })
+})
 //delete avatar
 router.get('/avatar/delete', (req,res) => {
     const sql = `SELECT * FROM user WHERE username = ?`
@@ -158,30 +176,12 @@ router.get('/avatar/delete', (req,res) => {
     })
 
 })
-
-//get avatar
-router.get('/avatar', (req,res) => {
-    const sql = `SELECT * FROM user WHERE username = ?`
-    var data = req.body.username
-    
-    conn.query(sql,data, (err,result) => {
-        if(err) return res.send(err)
-        res.send({
-            users:result[0],
-            photo: `http://localhost:2000/avatar/${result[0].avatar}`
-        })
-    })
-})
-//link avatar
-router.get('/avatar/:avatarId', (req,res) => {
-    res.sendFile(`${uploadDir}/${req.params.avatarId}`)
-})
 //read profile
-router.get('/users/profile', (req,res) => {
+router.get('/users/profile/:userid', (req,res) => {
     
-    const data = req.body.username
+    const data = req.params.userid
 
-    const sql = `SELECT * FROM user WHERE username = '${data}'`
+    const sql = `SELECT *, YEAR(CURDATE()) - YEAR(birthday) AS age FROM user WHERE id = '${data}'`
 
 
     conn.query(sql,data, (err,result) => {
@@ -189,11 +189,11 @@ router.get('/users/profile', (req,res) => {
 
         const user = result[0] // Result berupa array of object
 
-        if(!user) return res.send("User not found") // User tidak ditemukan
+        if(!user) return res.status(400).send("User not found") // User tidak ditemukan
 
         res.send({
             user,
-            photo: `http://localhost:2000/avatar/${result[0].avatar}`
+            photo: `http://localhost:2000/users/avatar/${user.avatar}?v=` +Date.now()
 })
         
     })
@@ -201,13 +201,19 @@ router.get('/users/profile', (req,res) => {
 
 // UPDATE USER
 router.patch('/users/:userid', (req, res) => { 
-    const sql = `UPDATE users SET ? WHERE id = ?`
-    const data = [req.body, req.params.userid]
+    const sql = `UPDATE user SET ? WHERE id = ${req.params.userid}`
+    const sql2 = `SELECT * FROM USER WHERE id = ${req.params.userid}`
+    const data = [req.body]
 
     conn.query(sql, data, (err, result) => {
-        if (err) return res.send(err.mess)
+        if (err) return res.send(err.message)
+        
+        conn.query(sql2,(err,result) => {
+            if (err) return res.send(err.message)
+            
+            res.send(result)
+        })
 
-        res.send(result)
     })
 })
 
