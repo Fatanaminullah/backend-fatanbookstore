@@ -84,21 +84,25 @@ router.get('/products', (req,res) => {
     })
 })
 //edit product
-router.patch('/products/edit/:idproduct', (req,res) => {
+router.patch('/products/edit/:idproduct', upload.single('images'), (req,res) => {
     const data = [req.body, req.params.idproduct]
     const sql = `UPDATE products SET ? WHERE id = ?`
     const sql2 = `SELECT * FROM products WHERE id = ${data[1]}`
+    const sql3 = `UPDATE products SET image  = '${req.file.filename}' WHERE id = '${data[1]}'`
 
     conn.query(sql, data, (err, result) => {
         if (err) return res.send(err.mess)
-        console.log(result);
-        
-        
-        conn.query(sql2, (err,result) => {
+
+        conn.query(sql3,(err,result2) => {
             if (err) return res.send(err.mess)
 
-            res.send(result)
+            conn.query(sql2, (err,result3) => {
+                if (err) return res.send(err.mess)
+    
+                res.send(result3)
+            })
         })
+        
 
     })
 })
