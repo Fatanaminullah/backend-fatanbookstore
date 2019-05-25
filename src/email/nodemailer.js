@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer')
 
-const sendMail = (username, name, email) => {
+const sendMail = (username, email) => {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth : {
@@ -19,7 +19,7 @@ const sendMail = (username, name, email) => {
         from: 'Fatan Aminullah  <fatan.aminullah.j@gmail.com>', // sender address
         to: email, // list of receivers
         subject: "Email Verification", // Subject line
-        html: `<h1><a href='http://localhost:2000/verify?username=${username}'>Click here to verification</h1>`
+        html: `<h1><a href='http://localhost:2000/verify?username=${username}'>Click here to activate your account</h1>`
     }
     
     transporter.sendMail(mail, (err,res) => {

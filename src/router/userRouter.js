@@ -7,12 +7,14 @@ const multer = require('multer')
 const path = require('path') // Menentukan folder uploads
 const fs = require('fs') // menghapus file gambar
 
+
 const uploadDir = path.join(__dirname + '/../uploads' )
+
+
 
 //create users
 router.post('/user/register', async (req, res) => { // CREATE USER
     var sql = `INSERT INTO user SET ?;` // Tanda tanya akan digantikan oleh variable data
-    var sql2 = `SELECT * FROM user;`
     var data = req.body 
 
     // validasi untuk email
@@ -24,11 +26,15 @@ router.post('/user/register', async (req, res) => { // CREATE USER
         if(err) return res.send(err.sqlMessage) // Error pada post data
 
         // sendVerify(req.body.username, req.body.name, req.body.email)
-        sendMail(req.body.username, req.body.name, req.body.email)
+        sendMail(req.body.username, req.body.email)
+
+        const sql2 = `UPDATE user SET role = '2' WHERE id = ${result.insertId}`
 
         conn.query(sql2, (err, result) => {
-            if(err) return res.send(err) // Error pada select data
-
+            if(err) return res.send(err) 
+            
+            console.log(result);
+            
             res.send(result)
         })
     })
@@ -45,7 +51,7 @@ router.get('/verify', (req, res) => {
         conn.query(sql2, (err, result) => {
             if(err) return res.send(err.sqlMessage)
 
-            res.send('<h1>Verifikasi berhasil</h1>')
+            res.sendFile(path.join(__dirname + '/verifikasi.html'))
         })
     })
 })

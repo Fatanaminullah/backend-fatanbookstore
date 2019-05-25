@@ -71,14 +71,10 @@ router.get('/products', (req,res) => {
     
     conn.query(sql, (err,result) => {
         if(err) return res.send(err.sqlMessage)
-        console.log(result);
 
-        var images = []
         result.map(item =>{
             item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
         })
-
-        console.log(result )
         
         res.send(result)
     })
