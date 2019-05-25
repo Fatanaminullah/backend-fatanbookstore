@@ -373,14 +373,35 @@ router.delete('/users/deletegenre/:userid', (req,res) => {
             
             conn.query(sql3, (err,result3) => {
                 if(err) return res.send(err.sqlMessage)
-
+                
                 res.send(result3)
-
+                
             })
         })
     })
 })
 
+//kodepos
+router.get('/kodepos',(req,res) => {
+    const sql = `SELECT * FROM tbl_kodepos`
+    
+    conn.query(sql,(err,result) => {
+        if(err) return res.send(err.sqlMessage)
+        
+        res.send(result)
+    })
+})
+
+//detail address
+router.get('/address/:id',(req,res) => {
+    const sql = `SELECT * FROM tbl_kodepos WHERE id = '${req.params.id}'`
+    
+    conn.query(sql,(err,result) => {
+        if(err) return res.send(err.sqlMessage)
+
+        res.send(result)
+    })
+})
 
 
 module.exports = router
