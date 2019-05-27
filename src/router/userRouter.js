@@ -412,6 +412,76 @@ router.get('/user/info/:iduser',(req,res) => {
         res.send(result)
     })
 })
+//show province
+router.get('/province',(req,res) => {
+    const sql = `SELECT DISTINCT provinsi FROM tbl_kodepos`
+    
+    conn.query(sql,(err,result) => {
+        if(err) return res.send(err.sqlMessage)
+
+        res.send(result)
+    })
+})
+//show kabupaten
+router.get('/kabupaten/:provinsi',(req,res) => {
+    const sql = `SELECT DISTINCT kabupaten FROM tbl_kodepos WHERE provinsi = '${req.params.provinsi}'`
+    
+    conn.query(sql,(err,result) => {
+        if(err) return res.send(err.sqlMessage)
+
+        res.send(result)
+    })
+})
+//show kecamatan
+router.get('/kecamatan/:kabupaten',(req,res) => {
+    const sql = `SELECT DISTINCT kecamatan FROM tbl_kodepos WHERE kabupaten ='${req.params.kabupaten}'`
+    
+    conn.query(sql,(err,result) => {
+        if(err) return res.send(err.sqlMessage)
+
+        res.send(result)
+    })
+})
+//show kelurahan
+router.get('/kelurahan/:kecamatan',(req,res) => {
+    const sql = `SELECT kelurahan FROM tbl_kodepos WHERE kecamatan = '${req.params.kecamatan}'`
+    
+    conn.query(sql,(err,result) => {
+        if(err) return res.send(err.sqlMessage)
+
+        res.send(result)
+    })
+})
+//show kodepos
+router.get('/kodepos/:kelurahan',(req,res) => {
+    const sql = `SELECt id,kodepos FROM tbl_kodepos WHERE kelurahan = '${req.params.kelurahan}'`
+    
+    conn.query(sql,(err,result) => {
+        if(err) return res.send(err.sqlMessage)
+
+        res.send(result)
+    })
+})
+//update info
+router.patch('/users/info/:userid', (req, res) => { 
+    const sql = `UPDATE user SET ? WHERE id = ${req.params.userid}`
+    const sql2 = `SELECT * FROM USER WHERE id = ${req.params.userid}`
+    const data = [req.body]
+
+    conn.query(sql, data, (err, result) => {
+        if (err) return res.send(err.message)
+        
+        conn.query(sql2,(err,result) => {
+            if (err) return res.send(err.message)
+            
+            res.send(result)
+        })
+
+    })
+})
+
+
+
 
 
 module.exports = router
