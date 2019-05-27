@@ -402,6 +402,16 @@ router.get('/address/:id',(req,res) => {
         res.send(result)
     })
 })
+//detail address user
+router.get('/user/info/:iduser',(req,res) => {
+    const sql = `SELECT address,kelurahan,kecamatan,kabupaten,provinsi,tbl_kodepos.kodepos,phone_number FROM user JOIN tbl_kodepos ON user.kodepos = tbl_kodepos.id WHERE user.id = '${req.params.iduser}'`
+    
+    conn.query(sql,(err,result) => {
+        if(err) return res.send(err.sqlMessage)
+
+        res.send(result)
+    })
+})
 
 
 module.exports = router
