@@ -8,6 +8,7 @@ const path = require('path') // Menentukan folder uploads
 const fs = require('fs') // menghapus file gambar
 
 const uploadDir = path.join(__dirname + '/../images' )
+const uploadDirr = path.join(__dirname + '/../promo' )
 
 const storagE = multer.diskStorage({
     
@@ -19,8 +20,30 @@ const storagE = multer.diskStorage({
         cb(null, uploadDir)
     }
 })
+const storages = multer.diskStorage({
+    
+    filename : function(req, file, cb) {
+        cb(null, Date.now() + file.fieldname + path.extname(file.originalname))
+    },
+    // Destination
+    destination : function(req, file, cb) {
+        cb(null, uploadDirr)
+    }
+})
 
 const upload = multer ({
+    storage: storages,
+    limits: {
+        fileSize: 100000000 // Byte
+    },
+    fileFilter(req, file, cb) {
+        if(!file.originalname.match(/\.(jpg|jpeg|png)$/)){ // will be error if the extension name is not one of these
+            return cb(new Error('Please upload image file (jpg, jpeg, or png)')) 
+        }
+        cb(undefined, cb)
+    }
+})
+const uploads = multer ({
     storage: storagE,
     limits: {
         fileSize: 100000000 // Byte
@@ -32,7 +55,86 @@ const upload = multer ({
         cb(undefined, cb)
     }
 })
+//link images promo
+router.get('/promo/images/:images', (req,res) => {
+    res.sendFile(`${uploadDir}/${req.params.images}`)
+})
 
+//add promo
+router.post('/promo/add', uploads.single('image'), (req,res) => {
+    const sql = `INSERT INTO promo SET ?`
+    
+    data = req.body
+
+    conn.query(sql,data, (err,result) => {
+        if(err) return res.send(err.sqlMessage)
+        
+        const sql2 = `UPDATE promo SET image  = '${req.file.filename}' WHERE id = '${result.insertId}'`
+        
+        conn.query(sql2, (err,result2) => {
+            if(err) return res.send(err.sqlMessage)
+
+            const sql3 =  `SELECT * FROM promo WHERE id = '${result.insertId}'`
+            
+            conn.query(sql3, (err,result3) => {
+                if(err) return res.send(err.sqlMessage)
+                
+                res.send(result3)
+            })
+        })
+
+
+    })
+})
+//show promo
+router.get('/promo', (req,res) => {
+    const sql = `SELECT * FROM promo`
+    conn.query(sql, (err,result) => {
+        if(err) return res.send(err.sqlMessage)
+
+        var photo = []
+
+        result.map(item =>{
+            photo.push(`http://localhost:2000/promo/images/${item.image}?v=` +Date.now())
+            item.image = (`http://localhost:2000/promo/images/${item.image}?v=` +Date.now())
+        })
+        console.log(photo);
+        
+
+         
+        res.send({
+            result,photo
+            })
+    })
+})
+//edit promo
+router.patch('/promo/edit/:idpromo', upload.single('promo'), (req,res) => {
+    const data = [req.body, req.params.idpromo]
+    const sql = `UPDATE promo SET ? WHERE id = ?`
+    const sql2 = `SELECT * FROM promo WHERE id = ${data[1]}`
+    const sql3 = `UPDATE promo SET image  = '${req.file.filename}' WHERE id = '${data[1]}'`
+
+
+
+    conn.query(sql, data, (err, result) => {
+        if (err) return res.send(err.message)
+
+        conn.query(sql3,(err,result2) => {
+            if (err) return res.send(err.message)
+
+
+            conn.query(sql2, (err,result3) => {
+                if (err) return res.send(err.message)
+
+                console.log(result3);
+                
+                res.send(result3)
+            })
+        })
+        
+
+    })
+})
 //add product
 router.post('/products/add', upload.single('images'), (req,res) => {
     const sql = `INSERT INTO products SET ?`
@@ -66,9 +168,7 @@ router.get('/product/images/:images', (req,res) => {
 //show all product
 router.get('/products', (req,res) => {
     const sql = `SELECT p.id,product_name,stock,price,page,a.author_name,ps.publisher_name, image FROM products p JOIN author a ON a.id = p.author JOIN publisher ps ON ps.id = p.publisher`
-    
-    
-    
+        
     conn.query(sql, (err,result) => {
         if(err) return res.send(err.sqlMessage)
 
@@ -76,25 +176,31 @@ router.get('/products', (req,res) => {
             item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
         })
         
+        
         res.send(result)
     })
 })
 //edit product
-router.patch('/products/edit/:idproduct', upload.single('images'), (req,res) => {
+router.patch('/products/edit/:idproduct', upload.single('image'), (req,res) => {
     const data = [req.body, req.params.idproduct]
     const sql = `UPDATE products SET ? WHERE id = ?`
     const sql2 = `SELECT * FROM products WHERE id = ${data[1]}`
     const sql3 = `UPDATE products SET image  = '${req.file.filename}' WHERE id = '${data[1]}'`
 
+
+
     conn.query(sql, data, (err, result) => {
-        if (err) return res.send(err.mess)
+        if (err) return res.send(err.message)
 
         conn.query(sql3,(err,result2) => {
-            if (err) return res.send(err.mess)
+            if (err) return res.send(err.message)
+
 
             conn.query(sql2, (err,result3) => {
-                if (err) return res.send(err.mess)
-    
+                if (err) return res.send(err.message)
+
+                console.log(result3);
+                
                 res.send(result3)
             })
         })
@@ -176,6 +282,7 @@ router.patch('/product/editgenre/:idproduct', (req,res) => {
 
             conn.query(sql3, (err,result3) => {
                 if(err) return res.send(err.sqlMessage)
+                
                 if(result3.length === 0) return res.status(400).send("Genre Not Found")
                 conn.query(sql4, data, (err, result4) => {
                     if(err) return res.send(err.sqlMessage)
