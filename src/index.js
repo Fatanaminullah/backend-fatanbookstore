@@ -3,6 +3,7 @@ const cors = require("cors");
 const userRouter = require('./router/userRouter')
 const productRouter = require('./router/productRouter')
 const genreRouter = require('./router/genreRouter')
+const cartRouter = require('./router/cartRouter')
 
 const ex = express()
 const port = process.env.PORT
@@ -16,6 +17,7 @@ ex.use(express.json())
 ex.use(userRouter)
 ex.use(productRouter)
 ex.use(genreRouter)
+ex.use(cartRouter)
 
 ex.listen(port, () => {
     console.log("Running at ", port);

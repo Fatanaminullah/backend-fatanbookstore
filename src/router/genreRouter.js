@@ -47,6 +47,21 @@ router.get('/genre/:userid',(req,res) => {
         res.send(result)
     })
 })
+//show al genre
+router.get('/genre',(req,res) => {
+    const sql = `SELECT * FROM genre `
+    
+    conn.query(sql,(err,result) => {
+        if (err) return res.send(err.sqlMessage);
+
+        result.map(item => {
+            item.genre_image = (`http://localhost:2000/genre/images/${item.genre_image}?v=` +Date.now())
+        })
+        
+        
+        res.send(result)
+    })
+})
 //add genre
 router.post('/genre/add', upload.single('images'), (req,res) => {
     sql = `INSERT INTO genre SET ?`
@@ -116,17 +131,19 @@ router.patch('/genreproducts/edit/:id',(req,res) => {
     })
 })
 //genre products
-router.get('/genre/products',(req,res) => {
+router.get('/genreproducts',(req,res) => {
     const sql = `SELECT pg.id,product_name,name FROM product_genre pg JOIN products p ON p.id = pg.product_id JOIN genre g ON g.id = pg.genre_id`
 
     conn.query(sql,(err,result) => {
         if (err) return res.send(err.sqlMessage);
-
+        
+        console.log(result);
+        
         res.send(result)
     })
 })
 //genre users
-router.get('/genre/users',(req,res) => {
+router.get('/genreusers',(req,res) => {
     const sql = `SELECT u.id,username,name FROM user_genre ug JOIN user u ON u.id = ug.user_id JOIN genre g ON g.id = ug.genre_id WHERE u.role = 2`
 
     conn.query(sql,(err,result) => {

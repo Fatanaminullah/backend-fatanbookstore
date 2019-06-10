@@ -57,6 +57,11 @@ const uploads = multer ({
 })
 //link images promo
 router.get('/promo/images/:images', (req,res) => {
+    res.sendFile(`${uploadDirr}/${req.params.images}`)
+})
+
+//link images
+router.get('/product/images/:images', (req,res) => {
     res.sendFile(`${uploadDir}/${req.params.images}`)
 })
 
@@ -95,13 +100,18 @@ router.get('/promo', (req,res) => {
         var photo = []
 
         result.map(item =>{
-            photo.push(`http://localhost:2000/promo/images/${item.image}?v=` +Date.now())
+            if(item.promo_status === 1){
+                photo.push(`http://localhost:2000/promo/images/${item.image}?v=` +Date.now())
+            }
             item.image = (`http://localhost:2000/promo/images/${item.image}?v=` +Date.now())
+            if(item.promo_status === 1){
+                item.promo_status = 'ACTIVE'
+            }else{
+                item.promo_status = 'NOT ACTIVE'
+            }
         })
-        console.log(photo);
         
 
-         
         res.send({
             result,photo
             })
@@ -112,21 +122,25 @@ router.patch('/promo/edit/:idpromo', upload.single('promo'), (req,res) => {
     const data = [req.body, req.params.idpromo]
     const sql = `UPDATE promo SET ? WHERE id = ?`
     const sql2 = `SELECT * FROM promo WHERE id = ${data[1]}`
-    const sql3 = `UPDATE promo SET image  = '${req.file.filename}' WHERE id = '${data[1]}'`
-
-
-
+    var sql3
+    if(req.file === undefined){
+        sql3 = `UPDATE promo SET image  = '${req.body.image}' WHERE id = '${data[1]}'`
+    }else{
+        sql3 = `UPDATE promo SET image  = '${req.file.filename}' WHERE id = '${data[1]}'`
+    }
+    
+     
     conn.query(sql, data, (err, result) => {
         if (err) return res.send(err.message)
+        
 
         conn.query(sql3,(err,result2) => {
             if (err) return res.send(err.message)
+            
 
 
             conn.query(sql2, (err,result3) => {
                 if (err) return res.send(err.message)
-
-                console.log(result3);
                 
                 res.send(result3)
             })
@@ -136,13 +150,14 @@ router.patch('/promo/edit/:idpromo', upload.single('promo'), (req,res) => {
     })
 })
 //add product
-router.post('/products/add', upload.single('images'), (req,res) => {
+router.post('/products/add', uploads.single('images'), (req,res) => {
     const sql = `INSERT INTO products SET ?`
     
     data = req.body
 
     conn.query(sql,data, (err,result) => {
-        if(err) return res.send(err.sqlMessage)
+        if(err) return console.log(err);
+        
         
         const sql2 = `UPDATE products SET image  = '${req.file.filename}' WHERE id = '${result.insertId}'`
         
@@ -153,6 +168,7 @@ router.post('/products/add', upload.single('images'), (req,res) => {
             
             conn.query(sql3, (err,result3) => {
                 if(err) return res.send(err.sqlMessage)
+
                 
                 res.send(result3)
             })
@@ -160,10 +176,6 @@ router.post('/products/add', upload.single('images'), (req,res) => {
 
 
     })
-})
-//link images
-router.get('/product/images/:images', (req,res) => {
-    res.sendFile(`${uploadDir}/${req.params.images}`)
 })
 //show all product
 router.get('/products', (req,res) => {
@@ -180,8 +192,39 @@ router.get('/products', (req,res) => {
         res.send(result)
     })
 })
+//show all product new
+router.get('/products/new', (req,res) => {
+    const sql = `SELECT p.id,product_name,stock,price,page,a.author_name,ps.publisher_name, image FROM products p JOIN author a ON a.id = p.author JOIN publisher ps ON ps.id = p.publisher ORDER BY created_at DESC LIMIT 8`
+        
+    conn.query(sql, (err,result) => {
+        if(err) return res.send(err.sqlMessage)
+
+        result.map(item =>{
+            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+        })
+        
+        
+        res.send(result)
+    })
+})
+
+//show detail product
+router.get('/product/:idproduct', (req,res) => {
+    const sql = `SELECT p.id,product_name,stock,price,page,a.author_name,ps.publisher_name, synopsis, image FROM products p JOIN author a ON a.id = p.author JOIN publisher ps ON ps.id = p.publisher WHERE p.id = ${req.params.idproduct}`
+        
+    conn.query(sql, (err,result) => {
+        if(err) return res.send(err.sqlMessage)
+        
+        result.map(item =>{
+            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+        })
+
+        res.send(result)
+          
+    })
+})
 //edit product
-router.patch('/products/edit/:idproduct', upload.single('image'), (req,res) => {
+router.patch('/products/edit/:idproduct', uploads.single('image'), (req,res) => {
     const data = [req.body, req.params.idproduct]
     const sql = `UPDATE products SET ? WHERE id = ?`
     const sql2 = `SELECT * FROM products WHERE id = ${data[1]}`
@@ -198,8 +241,6 @@ router.patch('/products/edit/:idproduct', upload.single('image'), (req,res) => {
 
             conn.query(sql2, (err,result3) => {
                 if (err) return res.send(err.message)
-
-                console.log(result3);
                 
                 res.send(result3)
             })
@@ -212,17 +253,20 @@ router.patch('/products/edit/:idproduct', upload.single('image'), (req,res) => {
 //show genre product
 router.get('/product/genre/:idproduct',(req,res) => {
     const data = req.params.idproduct
-    const sql = `SELECT * FROM products WHERE id=${data}`;
+    const sql = `SELECT p.id,product_name,stock,price,page,a.author_name,ps.publisher_name, synopsis, image FROM products p JOIN author a ON a.id = p.author JOIN publisher ps ON ps.id = p.publisher WHERE p.id = ${data}`
     const sql2 = `SELECT name FROM genre g JOIN product_genre pg ON g.id = pg.genre_id WHERE pg.product_id = ${data}`;
 
-    conn.query(sql,data, (err,result) => {
+    conn.query(sql, (err,result) => {
         if (err) return res.send(err.mess)
-
-        console.log(result[0]);
         
+        result.map(item =>{
+            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+        })
 
         const product = result[0]
         conn.query(sql2,data, (err,result2) => {
+            if (err) return res.send(err.mess)
+
             res.send({
                 product,
                 result2
@@ -333,21 +377,24 @@ router.delete('/product/deletegenre/:idproduct', (req,res) => {
     })
 })
 
-//product by genre
+//product by genre recommend
 router.get('/products/:genre',(req,res) => {
-    const data = req.query.name
+    const data = req.params.genre
     const sql = `SELECT id FROM genre WHERE name = '${data}'`
     
     
     conn.query(sql, (err,result) => {
         
         const genreid = result[0].id
-        console.log(genreid);
         
-        const sql2 = `SELECT * FROM products p JOIN product_genre pg ON p.id = pg.product_id WHERE pg.genre_id = ${genreid}`
+        const sql2 = `SELECT p.id,product_name,stock,price,page,a.author_name,ps.publisher_name, image FROM products p JOIN author a ON a.id = p.author JOIN publisher ps ON ps.id = p.publisher JOIN product_genre pg ON p.id = pg.product_id WHERE pg.genre_id = ${genreid} LIMIT 8`
         
         conn.query(sql2, (err,result2) => {
             if(err) return res.send(err.sqlMessage)
+
+            result2.map(item =>{
+                item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+            })
             
             res.send(result2)
         })
@@ -356,13 +403,19 @@ router.get('/products/:genre',(req,res) => {
 })
 
 //product by user genre
-router.get("/product/recommended", (req, res) => {
-    const data = req.body.id;
-    const sql = `SELECT * FROM products p JOIN product_genre pg ON p.id = pg.product_id WHERE pg.genre_id IN(SELECT genre_id FROM user_genre WHERE user_id = ${data})`;
+router.get("/product/recommended/:id", (req, res) => {
+    const data = req.params.id;
+    const sql = `SELECT * FROM products p JOIN author a ON a.id = p.author JOIN product_genre pg ON p.id = pg.product_id WHERE pg.genre_id IN(SELECT genre_id FROM user_genre WHERE user_id = ${data}) ORDER BY updated_at ASC LIMIT 8 `;
     conn.query(sql, (err, result) => {
         if (err) return res.send(err.sqlMessage);
 
+        result.map(item =>{
+            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+        })
+
         res.send(result);
+
+        
       });
 });
 
