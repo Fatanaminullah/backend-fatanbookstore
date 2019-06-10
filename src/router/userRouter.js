@@ -61,10 +61,14 @@ router.get("/verify", (req, res) => {
 router.post("/users/login", (req, res) => {
   const { username, password } = req.body;
 
-  const sql = `SELECT * FROM user WHERE username = '${username}'`;
+  const sql = `SELECT u.id, firstname,lastname,email,password,status,role,birthday,avatar,username,address,kodepos,phone_number,gender, count(s.user_id) AS cart FROM user u join shopping_cart s on u.id = s.user_id WHERE username = '${username}'`;
 
   conn.query(sql, async (err, result) => {
     if (err) return res.send(err.message);
+
+    result.map(item =>{
+      item.avatar = (`http://localhost:2000/users/avatar/${item.avatar}?v=` +Date.now())
+    })
 
     const user = result[0];
     console.log(result);
@@ -90,6 +94,8 @@ router.post("/admin/login", (req, res) => {
 
   conn.query(sql, async (err, result) => {
     if (err) return res.send(err.message);
+
+   
 
     const user = result[0];
 
