@@ -1,7 +1,4 @@
 const router = require('express').Router()
-const bcrypt = require('bcryptjs')
-const isEmail = require('validator/lib/isEmail')
-const {sendMail} = require('../email/nodemailer')
 const conn = require('../connection/connection')
 const multer = require('multer')
 const path = require('path') // Menentukan folder uploads
@@ -377,7 +374,7 @@ router.delete('/product/deletegenre/:idproduct', (req,res) => {
     })
 })
 
-//product by genre recommend
+//product by user genre
 router.get('/products/:genre',(req,res) => {
     const data = req.params.genre
     const sql = `SELECT id FROM genre WHERE name = '${data}'`
@@ -387,8 +384,9 @@ router.get('/products/:genre',(req,res) => {
         
         const genreid = result[0].id
         
-        const sql2 = `SELECT p.id,product_name,stock,price,page,a.author_name,ps.publisher_name, image FROM products p JOIN author a ON a.id = p.author JOIN publisher ps ON ps.id = p.publisher JOIN product_genre pg ON p.id = pg.product_id WHERE pg.genre_id = ${genreid} LIMIT 8`
-        
+        const sql2 = `SELECT p.id,product_name,stock,price,page,a.author_name,ps.publisher_name, image FROM products p JOIN author a ON a.id = p.author JOIN publisher ps ON ps.id = p.publisher JOIN product_genre pg ON p.id = pg.product_id WHERE pg.genre_id = ${genreid} `
+
+    
         conn.query(sql2, (err,result2) => {
             if(err) return res.send(err.sqlMessage)
 
@@ -402,7 +400,7 @@ router.get('/products/:genre',(req,res) => {
     })
 })
 
-//product by user genre
+//product by user genre recommended
 router.get("/product/recommended/:id", (req, res) => {
     const data = req.params.id;
     const sql = `SELECT * FROM products p JOIN author a ON a.id = p.author JOIN product_genre pg ON p.id = pg.product_id WHERE pg.genre_id IN(SELECT genre_id FROM user_genre WHERE user_id = ${data}) ORDER BY updated_at ASC LIMIT 8 `;

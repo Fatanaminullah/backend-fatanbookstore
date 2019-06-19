@@ -61,9 +61,11 @@ router.get("/verify", (req, res) => {
 router.post("/users/login", (req, res) => {
   const { username, password } = req.body;
 
-  const sql = `SELECT u.id, firstname,lastname,email,password,status,role,birthday,avatar,username,address,kodepos,phone_number,gender, count(s.user_id) AS cart FROM user u join shopping_cart s on u.id = s.user_id WHERE username = '${username}'`;
+  const sql = `SELECT u.id, firstname,lastname,email,password,status,role,birthday,avatar,username,address,kodepos,phone_number,gender, count(s.user_id) AS cart FROM user u LEFT JOIN shopping_cart s ON u.id = s.user_id WHERE username = '${username}'`;
 
   conn.query(sql, async (err, result) => {
+    console.log(username);
+    
     if (err) return res.send(err.message);
 
     result.map(item =>{
@@ -71,7 +73,7 @@ router.post("/users/login", (req, res) => {
     })
 
     const user = result[0];
-    console.log(result);
+    console.log(user);
 
     if (!user) return res.status(400).send("User not found");
 

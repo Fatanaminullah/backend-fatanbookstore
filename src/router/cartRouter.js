@@ -47,13 +47,43 @@ router.get(`/cart/:userid`,(req,res) => {
 router.delete('/cart/delete/:productid/:userid', (req,res) => {
     const data = req.params
     const sql = `DELETE FROM shopping_cart WHERE product_id = ${data.productid} AND user_id = ${data.userid}`
+    const sql2 = `SELECT count(*) AS cart FROM shopping_cart WHERE user_id = ${data.userid}`
 
     conn.query(sql, (err,result) => {
+        if (err) return console.log(err.message);
         
-        if (err) return console.log(err);
-        
-
-        res.send(result)
+        conn.query(sql2,(err,result2) => {
+            if (err) return console.log(err.message);
+            
+            res.send(result2)
+        })
     })  
 })
+
+//edit cart
+router.patch('/cart/update/:userid/:productid',(req,res) => {
+    const sql = `UPDATE shopping_cart SET quantity = ${req.body.quantity} WHERE user_id = ${req.params.userid} AND product_id = ${req.params.productid}`
+    const sql2 = `SELECT * FROM shopping_cart WHERE user_id = ${req.params.userid}`
+    
+    conn.query(sql,(err,result) => {
+        console.log(req.body.quantity);
+        
+        if (err) return console.log(err.message + "1");
+
+        console.log(result);
+        
+        
+        conn.query(sql2,(err,result2) => {
+            if (err) return console.log(err.message + "2");
+
+            console.log(result2);
+            
+
+            res.send(result2)
+        })
+
+    })
+})
+
+
 module.exports = router
