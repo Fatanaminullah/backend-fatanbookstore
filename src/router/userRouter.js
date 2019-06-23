@@ -13,9 +13,8 @@ const uploadDirr = path.join(__dirname + '/../images' )
 //create users
 router.post("/user/register", async (req, res) => {
   // CREATE USER
-  var sql = `INSERT INTO user SET ??`; // Tanda tanya akan digantikan oleh variable data
-  var data = [req.body];
-  console.log(req.body);
+  var sql = `INSERT INTO user SET ?`; // Tanda tanya akan digantikan oleh variable data
+  var data = req.body
   
 
   // validasi untuk email
@@ -23,7 +22,7 @@ router.post("/user/register", async (req, res) => {
   // ubah password yang masuk dalam bentuk hash
   req.body.password = await bcrypt.hash(req.body.password, 8);
 
-  conn.query(sql, [data], (err, result) => {
+  conn.query(sql, data, (err, result) => {
     if (err) return res.send(err.sqlMessage); // Error pada post data
 
     // sendVerify(req.body.username, req.body.name, req.body.email)
@@ -32,7 +31,7 @@ router.post("/user/register", async (req, res) => {
     const sql2 = `UPDATE user SET role = '2' WHERE id = ${result.insertId}`;
 
     conn.query(sql2, (err, result) => {
-      if (err) return res.send(err);
+      if (err) return res.send(err +"2");
 
       console.log(result);
 

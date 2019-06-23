@@ -30,12 +30,17 @@ const storages = multer.diskStorage({
     }
   });
 
+  //link image payment
+  router.get("/paymentconfirm/:payment", (req, res) => {
+    res.sendFile(`${uploadDir}/${req.params.payment}`);
+  });
+
 
 router.post('/orders/:userid',(req,res) => {
     const d = new Date()
     const order_code = `${req.params.userid}${d.getMilliseconds()}${d.getDate()}${d.getMonth()}${d.getFullYear()}${Math.floor((Math.random() * 100) - 1)}`
     // const data = [req.body]
-    const sql = `INSERT INTO orders (order_code,user_id,order_status) values (${order_code},${req.params.userid},1)`
+    const sql = `INSERT INTO orders (order_code,user_id,order_status,total) values (${order_code},${req.params.userid},1,${req.body.total})`
     const sql3 = `SELECT * FROM orders`
 
     conn.query(sql,(err,result) => {
@@ -68,7 +73,19 @@ router.post('/orderitem',(req,res) => {
 })
 //get order by user
 router.get(`/order/:userid`, (req,res) => {
-    const sql = `select o.order_code, os.order_status_description, o.order_date, o.order_destination, count(o.id) as quantity from orders o join order_status os on o.order_status = os.id join order_item oi on oi.order_id = o.id where user_id = ${req.params.userid} group by o.id;`
+    const sql = `select o.order_code, os.order_status_description, o.order_date, o.order_destination, count(o.id) as quantity from orders o join order_status os on o.order_status = os.id join order_item oi on oi.order_id = o.id where user_id = ${req.params.userid} and os.id != 7 group by o.id order by order_date desc;`
+    
+    conn.query(sql, (err,result) => {
+        if(err) return console.log(err.message);
+
+       
+
+        res.send(result)
+    })
+})
+//get order history by user
+router.get(`/orderhistory/:userid`, (req,res) => {
+    const sql = `select o.order_code, os.order_status_description, o.order_date, o.order_destination, count(o.id) as quantity from orders o join order_status os on o.order_status = os.id join order_item oi on oi.order_id = o.id where user_id = ${req.params.userid} and os.id = 7 group by o.id;`
     
     conn.query(sql, (err,result) => {
         if(err) return console.log(err.message);
@@ -107,8 +124,90 @@ router.post("/payment/uploads/:ordercode", upload.single("payment_confirmation")
 
         res.send(result)
       })
-
+      
     });
+  })
+  
+  //get notification order
+  router.get('/notification/order',(req,res) => {
+    const sql = `select o.id, order_code, u.username, order_date,o.payment_confirm,b.bank_name from orders o join user u  on u.id = o.user_id join bank_ref b on b.id = o.bank where order_status = 2;`
+    
+    conn.query(sql,(err,result) => {
+      if (err) return res.send(err.sqlMessage);
+
+      result.map(item =>{
+        item.payment_confirm = (`http://localhost:2000/paymentconfirm/${item.payment_confirm}?v=` +Date.now())
+      })
+    
+      res.send(result)
+  })
 })
+
+//user notification
+router.get('/user/notification/:userid',(req,res) => {
+  const sql = ` select o.id, order_code, u.username, order_date, os.order_status_description from orders o join user u  on u.id = o.user_id join bank_ref b on b.id = o.bank join order_status os on os.id = o.order_status where user_id = ${req.params.userid} and order_status = 1 or order_status = 3 or order_status = 4 or order_status = 5 or order_status = 7 and payment_confirm is not null;`
+
+  conn.query(sql, (err,result) => {
+    if (err) return res.send(err.sqlMessage);
+
+    res.send(result)
+  })
+})
+
+
+//get on going orders
+router.get('/orders/ongoing',(req,res) => {
+  const sql = `select o.id, o.order_status,order_code, u.username, os.order_status_description,order_date,order_destination,b.bank_name,total,payment_confirm from orders o join user u on u.id = o.user_id join order_status os on os.id = o.order_status join bank_ref b on b.id = o.bank where order_status != 1 and order_status != 7;`
+  conn.query(sql,(err,result) => {
+    if (err) return res.send(err.sqlMessage);
+
+    result.map(item =>{
+      item.payment_confirm = (`http://localhost:2000/paymentconfirm/${item.payment_confirm}?v=` +Date.now())
+    })
+  
+    res.send(result)
+  })
+})
+
+//get history order
+router.get('/historyorder',(req,res) => {
+  const sql = `select o.id, order_code, u.username, os.order_status_description,order_date,order_destination,b.bank_name,total,payment_confirm from orders o join user u on u.id = o.user_id join order_status os on os.id = o.order_status join bank_ref b on b.id = o.bank where order_status = 7`
+  
+  conn.query(sql,(err,result) => {
+    if (err) return res.send(err.sqlMessage);
+  
+    result.map(item =>{
+      item.payment_confirm = (`http://localhost:2000/paymentconfirm/${item.payment_confirm}?v=` +Date.now())
+    })
+  
+    res.send(result)
+  })
+})
+
+//get order status description
+router.get('/orderstatus',(req,res) => {
+  const sql = `select * from order_status`
+
+  conn.query(sql, (err,result) => {
+    if (err) return res.send(err.sqlMessage);
+
+    res.send(result)
+  })
+})
+
+//update status order
+router.patch('/updateorder/:orderid',(req,res) => {
+  const sql = `update orders set ? where id = ${req.params.orderid}`
+  const data = req.body
+
+  conn.query(sql,data, (err,result) => {
+    
+    if (err) return res.send(err.sqlMessage);
+
+    res.send(result)
+  })
+})
+
+
 
 module.exports = router
