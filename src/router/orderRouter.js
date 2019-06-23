@@ -40,19 +40,25 @@ router.post('/orders/:userid',(req,res) => {
     const d = new Date()
     const order_code = `${req.params.userid}${d.getMilliseconds()}${d.getDate()}${d.getMonth()}${d.getFullYear()}${Math.floor((Math.random() * 100) - 1)}`
     // const data = [req.body]
-    const sql = `INSERT INTO orders (order_code,user_id,order_status,total) values (${order_code},${req.params.userid},1,${req.body.total})`
+    const sql = `INSERT INTO orders (order_code,user_id,order_status,total,order_destination,order_destination_address) values (${order_code},${req.params.userid},1,${req.body.total},${req.body.order_destination},'${req.body.order_destination_address}')`
     const sql3 = `SELECT * FROM orders`
+    const sql2 = `DELETE FROM shopping_cart WHERE user_id = ${req.params.userid}`
 
     conn.query(sql,(err,result) => {
         if(err) return console.log(err.message+" 1");
-
+        
         const orderid = result.insertId
         
-            conn.query(sql3,(err,result3) => {
-                if(err) return console.log(err.message+ ' 3');
-                
-                res.send({orderid,result3})
-            })
+        conn.query(sql2,(err,result2) => {
+          if(err) return console.log(err.message+" 2");
+
+          conn.query(sql3,(err,result3) => {
+              if(err) return console.log(err.message+ ' 3');
+              
+              res.send({orderid,result3})
+          })
+        })
+        
     })
 })
 
@@ -73,7 +79,7 @@ router.post('/orderitem',(req,res) => {
 })
 //get order by user
 router.get(`/order/:userid`, (req,res) => {
-    const sql = `select o.order_code, os.order_status_description, o.order_date, o.order_destination, count(o.id) as quantity from orders o join order_status os on o.order_status = os.id join order_item oi on oi.order_id = o.id where user_id = ${req.params.userid} and os.id != 7 group by o.id order by order_date desc;`
+    const sql = `select o.id, o.order_status, o.order_code, os.order_status_description, o.order_date, o.order_destination, count(o.id) as quantity from orders o join order_status os on o.order_status = os.id join order_item oi on oi.order_id = o.id where user_id = ${req.params.userid} and os.id != 7 group by o.id order by order_date desc;`
     
     conn.query(sql, (err,result) => {
         if(err) return console.log(err.message);
@@ -130,24 +136,25 @@ router.post("/payment/uploads/:ordercode", upload.single("payment_confirmation")
   
   //get notification order
   router.get('/notification/order',(req,res) => {
-    const sql = `select o.id, order_code, u.username, order_date,o.payment_confirm,b.bank_name from orders o join user u  on u.id = o.user_id join bank_ref b on b.id = o.bank where order_status = 2;`
+    const sql = `select o.id, order_code, u.username, order_date,o.payment_confirm,b.bank_name from orders o join user u  on u.id = o.user_id join bank_ref b on b.id = o.bank where order_status in(2,6);`
     
     conn.query(sql,(err,result) => {
+      
       if (err) return res.send(err.sqlMessage);
-
+      
       result.map(item =>{
         item.payment_confirm = (`http://localhost:2000/paymentconfirm/${item.payment_confirm}?v=` +Date.now())
       })
-    
+      
       res.send(result)
+    })
   })
-})
-
-//user notification
-router.get('/user/notification/:userid',(req,res) => {
-  const sql = ` select o.id, order_code, u.username, order_date, os.order_status_description from orders o join user u  on u.id = o.user_id join bank_ref b on b.id = o.bank join order_status os on os.id = o.order_status where user_id = ${req.params.userid} and order_status = 1 or order_status = 3 or order_status = 4 or order_status = 5 or order_status = 7 and payment_confirm is not null;`
-
-  conn.query(sql, (err,result) => {
+  
+  //user notification
+  router.get('/user/notification/:userid',(req,res) => {
+    const sql = `select o.id, order_code, u.username, order_date, os.order_status_description from orders o join user u  on u.id = o.user_id join bank_ref b on b.id = o.bank join order_status os on os.id = o.order_status where user_id = ${req.params.userid} and order_status in (1,3,4,5,7) and payment_confirm is not null;`
+    
+    conn.query(sql, (err,result) => {
     if (err) return res.send(err.sqlMessage);
 
     res.send(result)

@@ -176,7 +176,7 @@ router.post('/products/add', uploads.single('images'), (req,res) => {
 })
 //show all product
 router.get('/products', (req,res) => {
-    const sql = `SELECT p.id,product_name,stock,price,page,a.author_name,ps.publisher_name, image FROM products p JOIN author a ON a.id = p.author JOIN publisher ps ON ps.id = p.publisher`
+    const sql = `SELECT p.id,product_name,stock,price,page,a.author_name,ps.publisher_name, image FROM products p LEFT JOIN author a ON a.id = p.author LEFT JOIN publisher ps ON ps.id = p.publisher`
         
     conn.query(sql, (err,result) => {
         if(err) return res.send(err.sqlMessage)

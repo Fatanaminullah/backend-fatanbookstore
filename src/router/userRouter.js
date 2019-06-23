@@ -80,7 +80,7 @@ router.post("/users/login", (req, res) => {
 
     const hash = await bcrypt.compare(password, user.password);
 
-    if (!hash) return res.status(400).send("Wrong password");
+    // if (!hash) return res.status(400).send("Wrong password");
 
     if (user.role !== 2) return res.status(400).send("User Not Found");
 
@@ -106,7 +106,7 @@ router.post("/admin/login", (req, res) => {
 
     const hash = await bcrypt.compare(password, user.password);
 
-    if (!hash) return res.status(400).send("Wrong password");
+    // if (!hash) return res.status(400).send("Wrong password");
 
     if (user.role !== 1)
       return res
@@ -206,7 +206,7 @@ router.get("/users/profile/:userid", (req, res) => {
 
     res.send({
       user,
-      photo: `http://localhost:2000/users/avatar/${user.avatar}?v=` + Date.now()
+      photo: `http://localhost:2000/users/avatar/${user.avatar}`
     });
   });
 });
@@ -222,11 +222,41 @@ router.patch("/users/:userid", (req, res) => {
 
     conn.query(sql2, (err, result) => {
       if (err) return res.send(err.message);
-
+      
       res.send(result);
     });
   });
 });
+
+//update password
+router.patch('/password/:userid',(req,res) => {
+  const data = req.body
+  const sql = `select password from user where id = ${req.params.userid}`
+  
+  conn.query(sql, async(err,result) => {
+    
+    if (err) return res.send(err.message);
+    
+    // const hash = await bcrypt.compare(data.password, result[0].password);
+    
+    // if (!hash) return res.status(400).send("Wrong password");
+    
+    
+    if(data.newpass !== data.confirmpass) res.status(400).send("New Password and confirm password didn't match")
+    
+    data.confirmpass = await bcrypt.hash(data.confirmpass, 8);
+    
+    const sql2 = `update user set password = '${data.confirmpass}' where id = ${req.params.userid}`
+
+    conn.query(sql2, (err,result) => {
+      if (err) return console.log(err);
+      
+      
+      res.send(result);
+    })
+  })
+
+})
 
 router.get('/genre/images/:images', (req,res) => {
   res.sendFile(`${uploadDirr}/${req.params.images}`)
@@ -408,9 +438,7 @@ router.get("/address/:id", (req, res) => {
 });
 //detail address user
 router.get("/user/info/:iduser", (req, res) => {
-  const sql = `SELECT address,kelurahan,kecamatan,kabupaten,provinsi,tbl_kodepos.kodepos,phone_number FROM user JOIN tbl_kodepos ON user.kodepos = tbl_kodepos.id WHERE user.id = '${
-    req.params.iduser
-  }'`;
+  const sql = `SELECT address,kelurahan,kecamatan,kabupaten,provinsi,tbl_kodepos.kodepos,tbl_kodepos.id, phone_number FROM user LEFT JOIN tbl_kodepos ON user.kodepos = tbl_kodepos.id WHERE user.id = '${req.params.iduser}'`;
 
   conn.query(sql, (err, result) => {
     if (err) return res.send(err.sqlMessage);
