@@ -18,12 +18,13 @@ router.post("/user/register", async (req, res) => {
   
 
   // validasi untuk email
-  if (!isEmail(req.body.email)) return res.send("Email is not valid");
+  if (!isEmail(req.body.email)) return res.status(400).send("Email is not valid") 
+  
   // ubah password yang masuk dalam bentuk hash
   req.body.password = await bcrypt.hash(req.body.password, 8);
 
   conn.query(sql, data, (err, result) => {
-    if (err) return res.send(err.sqlMessage); // Error pada post data
+    if (err) return res.status(400).send(err.sqlMessage); // Error pada post data
 
     // sendVerify(req.body.username, req.body.name, req.body.email)
     sendMail(req.body.username, req.body.email);
@@ -31,7 +32,7 @@ router.post("/user/register", async (req, res) => {
     const sql2 = `UPDATE user SET role = '2' WHERE id = ${result.insertId}`;
 
     conn.query(sql2, (err, result) => {
-      if (err) return res.send(err +"2");
+      if (err) return res.status(400).send(err +"2");
 
       console.log(result);
 
