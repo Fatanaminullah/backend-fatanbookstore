@@ -67,11 +67,16 @@ router.post('/orderitem',(req,res) => {
     var results = {}
     data[0].forEach(item =>{
         const sql = `INSERT INTO order_item (product_id,price,quantity,order_id) VALUES (${item})`
+        const sql2 = `update products set stock = stock - ${item[2]} where id = ${item[0]}`
         conn.query(sql,[data],(err,result) => {
-            
+          if(err) return console.log(err.message);  
+
+          conn.query(sql2, (err,result) => {
             if(err) return console.log(err.message);
             
             result2 = result
+          })
+            
         })
     })
     res.send(results)
@@ -104,7 +109,7 @@ router.get(`/orderhistory/:userid`, (req,res) => {
 
 //get orderitem by user
 router.get(`/orderitem/:ordercode`, (req,res) => {
-    const sql = `select p.id,p.product_name,p.price,p.stock,p.image, author_name, oi.quantity from order_item oi join  products p on p.id = oi.product_id join shopping_cart s on p.id = s.product_id JOIN author a ON a.id = p.author join orders o on o.id = oi.order_id where o.order_code = ${req.params.ordercode}`
+    const sql = `select p.id,p.product_name,p.price,p.stock,p.image, author_name, oi.quantity from order_item oi join  products p on p.id = oi.product_id left join shopping_cart s on p.id = s.product_id JOIN author a ON a.id = p.author join orders o on o.id = oi.order_id where o.order_code = ${req.params.ordercode}`
     
     conn.query(sql, (err,result) => {
         if(err) return console.log(err.message);
@@ -119,24 +124,32 @@ router.get(`/orderitem/:ordercode`, (req,res) => {
 
 //upload payment
 router.post("/payment/uploads/:ordercode", upload.single("payment_confirmation"), (req, res) => {
-    const sql = `UPDATE orders SET payment_confirm  = '${req.file.filename}', bank = ${req.body.id} WHERE order_code = '${req.params.ordercode}' AND order_status = 1`;
-    const sql2 = `update orders set order_status = 2 where order_code = '${req.params.ordercode}'`
+    const sql = `SELECT * FROM orders WHERE order_code = '${req.params.ordercode}'`
+    const sql2 = `UPDATE orders SET payment_confirm  = '${req.file.filename}', bank = ${req.body.id} WHERE order_code = '${req.params.ordercode}' AND order_status = 1`;
+    const sql3 = `update orders set order_status = 2 where order_code = '${req.params.ordercode}'`
   
     conn.query(sql, (err, result) => {
       if (err) return res.send(err.sqlMessage);
+      if(result.length == 0) return res.status(400).send('Order Code Not Found')
       
-      conn.query(sql2, (err,result) => {
+      
+      conn.query(sql2,(err,result2) => {
         if (err) return res.send(err.sqlMessage);
 
-        res.send(result)
+        conn.query(sql3, (err,result3) => {
+          if (err) return res.send(err.sqlMessage);
+  
+          res.send(result3)
+        })
       })
+      
       
     });
   })
   
   //get notification order
   router.get('/notification/order',(req,res) => {
-    const sql = `select o.id, order_code, u.username, order_date,o.payment_confirm,b.bank_name from orders o join user u  on u.id = o.user_id join bank_ref b on b.id = o.bank where order_status in(2,6);`
+    const sql = `select o.id,order_status, order_code, u.username, order_date,o.payment_confirm,b.bank_name from orders o join user u  on u.id = o.user_id join bank_ref b on b.id = o.bank where order_status in(2,6);`
     
     conn.query(sql,(err,result) => {
       
@@ -152,7 +165,7 @@ router.post("/payment/uploads/:ordercode", upload.single("payment_confirmation")
   
   //user notification
   router.get('/user/notification/:userid',(req,res) => {
-    const sql = `select o.id, order_code, u.username, order_date, os.order_status_description from orders o join user u  on u.id = o.user_id join bank_ref b on b.id = o.bank join order_status os on os.id = o.order_status where user_id = ${req.params.userid} and order_status in (1,3,4,5,7) and payment_confirm is not null;`
+    const sql = `select o.id, order_code, u.username, order_date, os.order_status_description from orders o join user u  on u.id = o.user_id join bank_ref b on b.id = o.bank join order_status os on os.id = o.order_status where user_id = ${req.params.userid} and order_status in (1,3,4,5,7) and payment_confirm is not null order by order_date desc;`
     
     conn.query(sql, (err,result) => {
     if (err) return res.send(err.sqlMessage);

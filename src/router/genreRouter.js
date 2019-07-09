@@ -63,7 +63,7 @@ router.get('/genre',(req,res) => {
     })
 })
 //add genre
-router.post('/genre/add', upload.single('images'), (req,res) => {
+router.post('/genre/add', upload.single('genre_image'), (req,res) => {
     sql = `INSERT INTO genre SET ?`
     sql3 =  `SELECT * FROM genre`
     data = req.body
@@ -91,7 +91,6 @@ router.patch('/genre/edit/:genreid', upload.single('genre_image'),(req,res) => {
     const sql2 = `UPDATE genre SET genre_image  = '${req.file.filename}' WHERE id = '${data[1]}'` 
     const sql3 = `SELECT * FROM genre`
 
-    console.log(data);
     
 
     
@@ -105,7 +104,7 @@ router.patch('/genre/edit/:genreid', upload.single('genre_image'),(req,res) => {
                 if (err) return res.send(err.sqlMessage);
     
                 res.send(result)
-                console.log(result);
+    
                 
             })
         })
