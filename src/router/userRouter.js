@@ -61,26 +61,26 @@ router.get("/verify", (req, res) => {
 router.post("/users/login", (req, res) => {
   const { username, password } = req.body;
 
-  const sql = `SELECT u.id, firstname,lastname,email,password,status,role,birthday,avatar,username,address,kodepos,phone_number,gender, count(s.user_id) AS cart FROM user u LEFT JOIN shopping_cart s ON u.id = s.user_id WHERE username = '${username}'`;
+  const sql = `SELECT u.id, firstname,lastname,email,password,status,role,birthday,avatar,username,address,kodepos,phone_number,gender, count(s.user_id) AS cart FROM user u LEFT JOIN shopping_cart s ON u.id = s.user_id WHERE username = '${username}' GROUP BY u.id`;
 
   conn.query(sql, async (err, result) => {
     console.log(username);
     
-    if (err) return res.send(err.message);
+    if (err) return res.send(err.message + " - 1");
 
     result.map(item =>{
       item.avatar = (`http://localhost:2000/users/avatar/${item.avatar}?v=` +Date.now())
     })
 
     const user = result[0];
-    console.log(user);
-
+    
+    
     if (!user) return res.status(400).send("User not found");
-
+    
     if (!user.status) return res.status(400).send("Please, verify your email");
-
-    const hash = await bcrypt.compare(password, user.password);
-
+    
+    const hash = bcrypt.compareSync(password, user.password);
+    
     // if (!hash) return res.status(400).send("Wrong password");
 
     if (user.role !== 2) return res.status(400).send("User Not Found");
@@ -107,7 +107,7 @@ router.post("/admin/login", (req, res) => {
 
     const hash = await bcrypt.compare(password, user.password);
 
-    // if (!hash) return res.status(400).send("Wrong password");
+    if (!hash) return res.status(400).send("Wrong password");
 
     if (user.role !== 1)
       return res
@@ -238,9 +238,9 @@ router.patch('/password/:userid',(req,res) => {
     
     if (err) return res.send(err.message);
     
-    // const hash = await bcrypt.compare(data.password, result[0].password);
+    const hash = await bcrypt.compare(data.password, result[0].password);
     
-    // if (!hash) return res.status(400).send("Wrong password");
+    if (!hash) return res.status(400).send("Wrong password");
     
     
     if(data.newpass !== data.confirmpass) res.status(400).send("New Password and confirm password didn't match")
