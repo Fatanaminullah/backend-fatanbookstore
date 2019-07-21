@@ -115,7 +115,7 @@ router.get(`/orderitem/:ordercode`, (req,res) => {
         if(err) return console.log(err.message);
 
         result.map(item =>{
-            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+            item.image = (`https://fatanbookstore-api.herokuapp.com/product/images/${item.image}?v=` +Date.now())
         })
         
         res.send(result)
@@ -156,7 +156,7 @@ router.post("/payment/uploads/:ordercode", upload.single("payment_confirmation")
       if (err) return res.send(err.sqlMessage);
       
       result.map(item =>{
-        item.payment_confirm = (`http://localhost:2000/paymentconfirm/${item.payment_confirm}?v=` +Date.now())
+        item.payment_confirm = (`https://fatanbookstore-api.herokuapp.com/paymentconfirm/${item.payment_confirm}?v=` +Date.now())
       })
       
       res.send(result)
@@ -182,7 +182,7 @@ router.get('/orders/ongoing',(req,res) => {
     if (err) return res.send(err.sqlMessage);
 
     result.map(item =>{
-      item.payment_confirm = (`http://localhost:2000/paymentconfirm/${item.payment_confirm}?v=` +Date.now())
+      item.payment_confirm = (`https://fatanbookstore-api.herokuapp.com/paymentconfirm/${item.payment_confirm}?v=` +Date.now())
     })
   
     res.send(result)
@@ -197,7 +197,7 @@ router.get('/historyorder',(req,res) => {
     if (err) return res.send(err.sqlMessage);
   
     result.map(item =>{
-      item.payment_confirm = (`http://localhost:2000/paymentconfirm/${item.payment_confirm}?v=` +Date.now())
+      item.payment_confirm = (`https://fatanbookstore-api.herokuapp.com/paymentconfirm/${item.payment_confirm}?v=` +Date.now())
     })
   
     res.send(result)

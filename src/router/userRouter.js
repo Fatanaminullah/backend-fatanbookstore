@@ -69,7 +69,7 @@ router.post("/users/login", (req, res) => {
     if (err) return res.send(err.message + " - 1");
 
     result.map(item =>{
-      item.avatar = (`http://localhost:2000/users/avatar/${item.avatar}?v=` +Date.now())
+      item.avatar = (`https://fatanbookstore-api.herokuapp.com/users/avatar/${item.avatar}?v=` +Date.now())
     })
 
     const user = result[0];
@@ -169,7 +169,7 @@ router.get("/avatar", (req, res) => {
     if (err) return res.send(err);
     res.send({
       users: result[0],
-      photo: `http://localhost:2000/avatar/${result[0].avatar}`
+      photo: `https://fatanbookstore-api.herokuapp.com/avatar/${result[0].avatar}`
     });
   });
 });
@@ -207,7 +207,7 @@ router.get("/users/profile/:userid", (req, res) => {
 
     res.send({
       user,
-      photo: `http://localhost:2000/users/avatar/${user.avatar}`
+      photo: `https://fatanbookstore-api.herokuapp.com/users/avatar/${user.avatar}`
     });
   });
 });
@@ -272,7 +272,7 @@ router.get("/users/genre/:userid", (req, res) => {
     if (err) return res.send(err.message);
 
     result.map(item => {
-      item.genre_image = (`http://localhost:2000/genre/images/${item.genre_image}?v=` +Date.now())
+      item.genre_image = (`https://fatanbookstore-api.herokuapp.com/genre/images/${item.genre_image}?v=` +Date.now())
     })
 
     res.send(result);

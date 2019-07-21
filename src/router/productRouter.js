@@ -98,9 +98,9 @@ router.get('/promo', (req,res) => {
 
         result.map(item =>{
             if(item.promo_status === 1){
-                photo.push(`http://localhost:2000/promo/images/${item.image}?v=` +Date.now())
+                photo.push(`https://fatanbookstore-api.herokuapp.com/promo/images/${item.image}?v=` +Date.now())
             }
-            item.image = (`http://localhost:2000/promo/images/${item.image}?v=` +Date.now())
+            item.image = (`https://fatanbookstore-api.herokuapp.com/promo/images/${item.image}?v=` +Date.now())
             if(item.promo_status === 1){
                 item.promo_status = 'ACTIVE'
             }else{
@@ -182,7 +182,7 @@ router.get('/products', (req,res) => {
         if(err) return res.send(err.sqlMessage)
 
         result.map(item =>{
-            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+            item.image = (`https://fatanbookstore-api.herokuapp.com/product/images/${item.image}?v=` +Date.now())
         })
         
         
@@ -197,7 +197,7 @@ router.get('/products/new', (req,res) => {
         if(err) return res.send(err.sqlMessage)
 
         result.map(item =>{
-            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+            item.image = (`https://fatanbookstore-api.herokuapp.com/product/images/${item.image}?v=` +Date.now())
         })
         
         
@@ -213,7 +213,7 @@ router.get('/product/:idproduct', (req,res) => {
         if(err) return res.send(err.sqlMessage)
         
         result.map(item =>{
-            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+            item.image = (`https://fatanbookstore-api.herokuapp.com/product/images/${item.image}?v=` +Date.now())
         })
 
         res.send(result)
@@ -257,7 +257,7 @@ router.get('/product/genre/:idproduct',(req,res) => {
         if (err) return res.send(err.mess)
         
         result.map(item =>{
-            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+            item.image = (`https://fatanbookstore-api.herokuapp.com/product/images/${item.image}?v=` +Date.now())
         })
 
         const product = result[0]
@@ -391,7 +391,7 @@ router.get('/products/:genre',(req,res) => {
             if(err) return res.send(err.sqlMessage)
 
             result2.map(item =>{
-                item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+                item.image = (`https://fatanbookstore-api.herokuapp.com/product/images/${item.image}?v=` +Date.now())
             })
             
             res.send(result2)
@@ -408,7 +408,7 @@ router.get("/product/recommended/:id", (req, res) => {
         if (err) return res.send(err.sqlMessage);
 
         result.map(item =>{
-            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+            item.image = (`https://fatanbookstore-api.herokuapp.com/product/images/${item.image}?v=` +Date.now())
         })
 
         res.send(result);

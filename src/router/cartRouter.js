@@ -36,7 +36,7 @@ router.get(`/cart/:userid`,(req,res) => {
         if (err) return res.send(err.sqlMessage);
 
         result.map(item =>{
-            item.image = (`http://localhost:2000/product/images/${item.image}?v=` +Date.now())
+            item.image = (`https://fatanbookstore-api.herokuapp.com/product/images/${item.image}?v=` +Date.now())
         })
 
         res.send(result)

@@ -19,7 +19,7 @@ const sendMail = (username, email) => {
         from: 'Fatan Aminullah  <fatan.aminullah.j@gmail.com>', // sender address
         to: email, // list of receivers
         subject: "Email Verification", // Subject line
-        html: `<h1><a href='http://localhost:2000/verify?username=${username}'>Click here to activate your account</h1>`
+        html: `<h1><a href='https://fatanbookstore-api.herokuapp.com/verify?username=${username}'>Click here to activate your account</h1>`
     }
     
     transporter.sendMail(mail, (err,res) => {

@@ -40,7 +40,7 @@ router.get('/genre/:userid',(req,res) => {
         if (err) return res.send(err.sqlMessage);
 
         result.map(item => {
-            item.genre_image = (`http://localhost:2000/genre/images/${item.genre_image}?v=` +Date.now())
+            item.genre_image = (`https://fatanbookstore-api.herokuapp.com/genre/images/${item.genre_image}?v=` +Date.now())
         })
         
         
@@ -55,7 +55,7 @@ router.get('/genre',(req,res) => {
         if (err) return res.send(err.sqlMessage);
 
         result.map(item => {
-            item.genre_image = (`http://localhost:2000/genre/images/${item.genre_image}?v=` +Date.now())
+            item.genre_image = (`https://fatanbookstore-api.herokuapp.com/genre/images/${item.genre_image}?v=` +Date.now())
         })
         
         
