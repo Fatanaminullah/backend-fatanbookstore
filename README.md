@@ -1,1 +1,1 @@
-# backend-fatanbookstore
+# API for fatanbookstore.herokuapp.com
