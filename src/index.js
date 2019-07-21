@@ -8,7 +8,7 @@ const orderRouter = require('./router/orderRouter')
 const bankRouter = require('./router/bankRouter')
 
 const ex = express()
-const port = process.env.PORT
+const port = process.env.PORT || 2000
 
 ex.get('/', (req,res) => {
     res.send(`<h1>API runnning on ${port}</h1>`)
