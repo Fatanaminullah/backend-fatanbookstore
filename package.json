@@ -20,6 +20,6 @@
     "nodemailer": "^4.7.0",
     "nodemon": "^1.18.11",
     "sharp": "^0.22.1",
-    "validator": "^10.11.0"
+    "validator": "^13.7.0"
   }
 }
