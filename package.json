@@ -19,7 +19,7 @@
     "mysql": "github:mysqljs/mysql",
     "nodemailer": "^4.7.0",
     "nodemon": "^1.18.11",
-    "sharp": "^0.22.1",
+    "sharp": "^0.30.5",
     "validator": "^10.11.0"
   }
 }
